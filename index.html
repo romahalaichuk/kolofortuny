@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Fortuna</title>
 		<style>
+			/* --- STYLE: bez zmian --- */
 			body {
 				font-family: Arial, sans-serif;
 				text-align: center;
@@ -51,7 +52,6 @@
 				border-top: 30px solid red;
 				margin: 20px auto;
 			}
-
 			#overlay {
 				position: fixed;
 				top: 0;
@@ -82,15 +82,6 @@
 					opacity: 1;
 				}
 			}
-
-			.firework {
-				position: absolute;
-				width: 5px;
-				height: 5px;
-				background: yellow;
-				border-radius: 50%;
-				animation: explode 1s ease-out forwards;
-			}
 			@keyframes explode {
 				0% {
 					transform: scale(1) translate(0, 0);
@@ -98,12 +89,24 @@
 				}
 				100% {
 					transform: scale(0.5)
-						translate(calc(100px * (var(--dx))), calc(100px * (var(--dy))));
+						translate(calc(250px * (var(--dx))), calc(250px * (var(--dy))));
 					opacity: 0;
 				}
 			}
+
+			.firework {
+				position: absolute;
+				width: 5px;
+				height: 5px;
+				background: yellow;
+				border-radius: 50%;
+				animation: explode 2.5s ease-out forwards;
+				pointer-events: none; /* żeby nie przeszkadzały w klikaniu */
+				z-index: 999; /* nad wszystkim */
+			}
 		</style>
 	</head>
+
 	<body>
 		<h1>Koło Fortuny</h1>
 
@@ -153,12 +156,10 @@
 						players.push(name);
 					}
 				});
-
 				if (players.length < 2) {
 					alert("Dodaj przynajmniej dwóch uczestników!");
 					return;
 				}
-
 				colors = players.map(() => getRandomColor());
 				document.getElementById("inputSection").style.display = "none";
 				document.getElementById("wheelSection").style.display = "block";
@@ -207,7 +208,7 @@
 				document.getElementById("overlay").style.display = "none";
 				spinAngleStart = Math.random() * 10 + 10;
 				spinTime = 0;
-				spinTimeTotal = Math.random() * 5000 + 5000;
+				spinTimeTotal = Math.random() * 5000 + 6000;
 				rotateWheel();
 				document.getElementById("spinSound").play();
 			}
@@ -228,10 +229,20 @@
 			function stopRotateWheel() {
 				const degrees = (startAngle * 180) / Math.PI + 90;
 				const arcd = 360 / players.length;
-				const index = Math.floor((360 - (degrees % 360)) / arcd);
-				const winner = players[index];
-				document.getElementById("winnerText").innerText =
-					"Wylosowano: " + winner;
+				const rawIndex = (360 - (degrees % 360)) / arcd;
+				const index = Math.floor(rawIndex);
+				const diff = rawIndex - index;
+
+				let winnerText = "";
+
+				if (diff < 0.03 || diff > 0.97) {
+					const nextIndex = (index + 1) % players.length;
+					winnerText = `Remis!\n${players[index]} i ${players[nextIndex]}`;
+				} else {
+					winnerText = `Wylosowano: ${players[index]}`;
+				}
+
+				document.getElementById("winnerText").innerText = winnerText;
 				document.getElementById("overlay").style.display = "flex";
 				launchFireworks();
 			}
@@ -252,16 +263,42 @@
 			}
 
 			function launchFireworks() {
-				for (let i = 0; i < 20; i++) {
-					const fw = document.createElement("div");
-					fw.classList.add("firework");
-					fw.style.left = window.innerWidth / 2 + "px";
-					fw.style.top = window.innerHeight / 2 + "px";
-					fw.style.setProperty("--dx", Math.random() * 2 - 1);
-					fw.style.setProperty("--dy", Math.random() * 2 - 1);
-					document.body.appendChild(fw);
-					setTimeout(() => fw.remove(), 1000);
+				// Pierwsza fala fajerwerków
+				for (let i = 0; i < 100; i++) {
+					createFirework();
 				}
+
+				// Druga fala po 1 sekundzie
+				setTimeout(() => {
+					for (let i = 0; i < 100; i++) {
+						createFirework();
+					}
+				}, 1000);
+			}
+
+			function createFirework() {
+				const fw = document.createElement("div");
+				fw.classList.add("firework");
+				fw.style.left = window.innerWidth / 2 + "px";
+				fw.style.top = window.innerHeight / 2 + "px";
+				fw.style.setProperty("--dx", Math.random() * 4 - 2); // większy rozrzut
+				fw.style.setProperty("--dy", Math.random() * 4 - 2); // większy rozrzut
+				fw.style.background = getRandomFireworkColor(); // kolorowe fajerwerki
+				document.body.appendChild(fw);
+				setTimeout(() => fw.remove(), 2500); // żyją 2.5 sekundy
+			}
+
+			function getRandomFireworkColor() {
+				const colors = [
+					"yellow",
+					"red",
+					"aqua",
+					"lime",
+					"fuchsia",
+					"white",
+					"orange",
+				];
+				return colors[Math.floor(Math.random() * colors.length)];
 			}
 		</script>
 
