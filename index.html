@@ -5,7 +5,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Fortuna</title>
 		<style>
-			/* --- STYLE: bez zmian --- */
 			body {
 				font-family: Arial, sans-serif;
 				text-align: center;
@@ -101,8 +100,8 @@
 				background: yellow;
 				border-radius: 50%;
 				animation: explode 2.5s ease-out forwards;
-				pointer-events: none; /* żeby nie przeszkadzały w klikaniu */
-				z-index: 999; /* nad wszystkim */
+				pointer-events: none;
+				z-index: 999;
 			}
 		</style>
 	</head>
@@ -263,12 +262,10 @@
 			}
 
 			function launchFireworks() {
-				// Pierwsza fala fajerwerków
 				for (let i = 0; i < 100; i++) {
 					createFirework();
 				}
 
-				// Druga fala po 1 sekundzie
 				setTimeout(() => {
 					for (let i = 0; i < 100; i++) {
 						createFirework();
@@ -281,11 +278,11 @@
 				fw.classList.add("firework");
 				fw.style.left = window.innerWidth / 2 + "px";
 				fw.style.top = window.innerHeight / 2 + "px";
-				fw.style.setProperty("--dx", Math.random() * 4 - 2); // większy rozrzut
-				fw.style.setProperty("--dy", Math.random() * 4 - 2); // większy rozrzut
-				fw.style.background = getRandomFireworkColor(); // kolorowe fajerwerki
+				fw.style.setProperty("--dx", Math.random() * 4 - 2);
+				fw.style.setProperty("--dy", Math.random() * 4 - 2);
+				fw.style.background = getRandomFireworkColor();
 				document.body.appendChild(fw);
-				setTimeout(() => fw.remove(), 2500); // żyją 2.5 sekundy
+				setTimeout(() => fw.remove(), 2500);
 			}
 
 			function getRandomFireworkColor() {
