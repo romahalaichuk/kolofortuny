@@ -10,15 +10,17 @@
 				text-align: center;
 				padding: 20px;
 				background: #f0f0f0;
+				position: relative;
 			}
 			#inputSection,
 			#wheelSection {
 				margin-top: 20px;
 			}
-			textarea {
-				width: 300px;
-				height: 150px;
-				padding: 10px;
+			#playersList input {
+				display: block;
+				margin: 5px auto;
+				padding: 8px;
+				width: 250px;
 				font-size: 16px;
 			}
 			canvas {
@@ -35,6 +37,8 @@
 				background-color: #007bff;
 				color: white;
 				border-radius: 5px;
+				z-index: 2;
+				position: relative;
 			}
 			button:hover {
 				background-color: #0056b3;
@@ -44,8 +48,59 @@
 				height: 0;
 				border-left: 20px solid transparent;
 				border-right: 20px solid transparent;
-				border-bottom: 30px solid red;
+				border-top: 30px solid red; /* STRZAŁKA W DÓŁ */
 				margin: 20px auto;
+			}
+			/* Zaciemnienie i wynik */
+			#overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.7);
+				display: none;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+				z-index: 1;
+			}
+			#winnerText {
+				color: white;
+				font-size: 40px;
+				font-weight: bold;
+				margin-bottom: 20px;
+				animation: pop 1s ease;
+			}
+			@keyframes pop {
+				0% {
+					transform: scale(0.5);
+					opacity: 0;
+				}
+				100% {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+			/* Fajerwerki */
+			.firework {
+				position: absolute;
+				width: 5px;
+				height: 5px;
+				background: yellow;
+				border-radius: 50%;
+				animation: explode 1s ease-out forwards;
+			}
+			@keyframes explode {
+				0% {
+					transform: scale(1) translate(0, 0);
+					opacity: 1;
+				}
+				100% {
+					transform: scale(0.5)
+						translate(calc(100px * (var(--dx))), calc(100px * (var(--dy))));
+					opacity: 0;
+				}
 			}
 		</style>
 	</head>
@@ -53,10 +108,10 @@
 		<h1>Koło Fortuny</h1>
 
 		<div id="inputSection">
-			<textarea
-				id="playersInput"
-				placeholder="Wpisz uczestników, każdy w nowej linii..."></textarea
-			><br />
+			<div id="playersList">
+				<input type="text" placeholder="Uczestnik 1" />
+			</div>
+			<button onclick="addPlayerInput()">Dodaj uczestnika</button><br />
 			<button onclick="startGame()">Start</button>
 		</div>
 
@@ -65,6 +120,10 @@
 			<canvas id="wheel" width="400" height="400"></canvas><br />
 			<button onclick="spinWheel()">Losuj ponownie</button>
 			<button onclick="finishGame()">Finish</button>
+		</div>
+
+		<div id="overlay">
+			<div id="winnerText"></div>
 		</div>
 
 		<script>
@@ -78,13 +137,28 @@
 			const canvas = document.getElementById("wheel");
 			const ctx = canvas.getContext("2d");
 
+			function addPlayerInput() {
+				const newInput = document.createElement("input");
+				newInput.type = "text";
+				newInput.placeholder = "Nowy uczestnik";
+				document.getElementById("playersList").appendChild(newInput);
+			}
+
 			function startGame() {
-				const input = document.getElementById("playersInput").value.trim();
-				if (!input) {
-					alert("Wpisz uczestników!");
+				const inputs = document.querySelectorAll("#playersList input");
+				players = [];
+				inputs.forEach((input) => {
+					const name = input.value.trim();
+					if (name) {
+						players.push(name);
+					}
+				});
+
+				if (players.length < 2) {
+					alert("Dodaj przynajmniej dwóch uczestników!");
 					return;
 				}
-				players = input.split("\n").filter((name) => name.trim() !== "");
+
 				colors = players.map(() => getRandomColor());
 				document.getElementById("inputSection").style.display = "none";
 				document.getElementById("wheelSection").style.display = "block";
@@ -96,7 +170,9 @@
 				clearTimeout(spinTimeout);
 				document.getElementById("inputSection").style.display = "block";
 				document.getElementById("wheelSection").style.display = "none";
-				document.getElementById("playersInput").value = "";
+				document.getElementById("playersList").innerHTML =
+					'<input type="text" placeholder="Uczestnik 1">';
+				document.getElementById("overlay").style.display = "none";
 				startAngle = 0;
 			}
 
@@ -127,11 +203,13 @@
 			}
 
 			function spinWheel() {
-				clearTimeout(spinTimeout); // Na wszelki wypadek zatrzymaj stare kręcenie
+				clearTimeout(spinTimeout);
+				document.getElementById("overlay").style.display = "none";
 				spinAngleStart = Math.random() * 10 + 10;
 				spinTime = 0;
-				spinTimeTotal = Math.random() * 3000 + 4000;
+				spinTimeTotal = Math.random() * 5000 + 5000; // DUŻO DŁUŻSZE kręcenie (5–10 sek)
 				rotateWheel();
+				document.getElementById("spinSound").play();
 			}
 
 			function rotateWheel() {
@@ -151,11 +229,11 @@
 				const degrees = (startAngle * 180) / Math.PI + 90;
 				const arcd = 360 / players.length;
 				const index = Math.floor((360 - (degrees % 360)) / arcd);
-				ctx.save();
-				ctx.font = "bold 24px Arial";
-				ctx.fillStyle = "black";
-				ctx.fillText("Wylosowano: " + players[index], 200, 200);
-				ctx.restore();
+				const winner = players[index];
+				document.getElementById("winnerText").innerText =
+					"Wylosowano: " + winner;
+				document.getElementById("overlay").style.display = "flex";
+				launchFireworks();
 			}
 
 			function easeOut(t, b, c, d) {
@@ -172,6 +250,23 @@
 				}
 				return color;
 			}
+
+			function launchFireworks() {
+				for (let i = 0; i < 20; i++) {
+					const fw = document.createElement("div");
+					fw.classList.add("firework");
+					fw.style.left = window.innerWidth / 2 + "px";
+					fw.style.top = window.innerHeight / 2 + "px";
+					fw.style.setProperty("--dx", Math.random() * 2 - 1);
+					fw.style.setProperty("--dy", Math.random() * 2 - 1);
+					document.body.appendChild(fw);
+					setTimeout(() => fw.remove(), 1000);
+				}
+			}
 		</script>
+
+		<audio
+			id="spinSound"
+			src="/_pl_sound_krzyk-w-cyrku-to-jest-zyrafa_.mp3"></audio>
 	</body>
 </html>
