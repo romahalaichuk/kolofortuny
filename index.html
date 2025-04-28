@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Fortuna</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				text-align: center;
+				padding: 20px;
+				background: #f0f0f0;
+			}
+			#inputSection,
+			#wheelSection {
+				margin-top: 20px;
+			}
+			textarea {
+				width: 300px;
+				height: 150px;
+				padding: 10px;
+				font-size: 16px;
+			}
+			canvas {
+				margin-top: 20px;
+				background: white;
+				border-radius: 50%;
+			}
+			button {
+				margin: 10px;
+				padding: 10px 20px;
+				font-size: 18px;
+				cursor: pointer;
+				border: none;
+				background-color: #007bff;
+				color: white;
+				border-radius: 5px;
+			}
+			button:hover {
+				background-color: #0056b3;
+			}
+			#pointer {
+				width: 0;
+				height: 0;
+				border-left: 20px solid transparent;
+				border-right: 20px solid transparent;
+				border-bottom: 30px solid red;
+				margin: 20px auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Koło Fortuny</h1>
+
+		<div id="inputSection">
+			<textarea
+				id="playersInput"
+				placeholder="Wpisz uczestników, każdy w nowej linii..."></textarea
+			><br />
+			<button onclick="startGame()">Start</button>
+		</div>
+
+		<div id="wheelSection" style="display: none">
+			<div id="pointer"></div>
+			<canvas id="wheel" width="400" height="400"></canvas><br />
+			<button onclick="spinWheel()">Losuj ponownie</button>
+			<button onclick="finishGame()">Finish</button>
+		</div>
+
+		<script>
+			let players = [];
+			let colors = [];
+			let startAngle = 0;
+			let spinTimeout = null;
+			let spinAngleStart = 0;
+			let spinTime = 0;
+			let spinTimeTotal = 0;
+			const canvas = document.getElementById("wheel");
+			const ctx = canvas.getContext("2d");
+
+			function startGame() {
+				const input = document.getElementById("playersInput").value.trim();
+				if (!input) {
+					alert("Wpisz uczestników!");
+					return;
+				}
+				players = input.split("\n").filter((name) => name.trim() !== "");
+				colors = players.map(() => getRandomColor());
+				document.getElementById("inputSection").style.display = "none";
+				document.getElementById("wheelSection").style.display = "block";
+				drawWheel();
+				spinWheel();
+			}
+
+			function finishGame() {
+				clearTimeout(spinTimeout);
+				document.getElementById("inputSection").style.display = "block";
+				document.getElementById("wheelSection").style.display = "none";
+				document.getElementById("playersInput").value = "";
+				startAngle = 0;
+			}
+
+			function drawWheel() {
+				const outsideRadius = 150;
+				const textRadius = 120;
+				const insideRadius = 50;
+				ctx.clearRect(0, 0, 400, 400);
+				const arc = (Math.PI * 2) / players.length;
+				for (let i = 0; i < players.length; i++) {
+					const angle = startAngle + i * arc;
+					ctx.fillStyle = colors[i];
+					ctx.beginPath();
+					ctx.arc(200, 200, outsideRadius, angle, angle + arc, false);
+					ctx.arc(200, 200, insideRadius, angle + arc, angle, true);
+					ctx.fill();
+					ctx.save();
+					ctx.fillStyle = "black";
+					ctx.translate(
+						200 + Math.cos(angle + arc / 2) * textRadius,
+						200 + Math.sin(angle + arc / 2) * textRadius
+					);
+					ctx.rotate(angle + arc / 2);
+					ctx.textAlign = "center";
+					ctx.fillText(players[i], 0, 0);
+					ctx.restore();
+				}
+			}
+
+			function spinWheel() {
+				clearTimeout(spinTimeout); // Na wszelki wypadek zatrzymaj stare kręcenie
+				spinAngleStart = Math.random() * 10 + 10;
+				spinTime = 0;
+				spinTimeTotal = Math.random() * 3000 + 4000;
+				rotateWheel();
+			}
+
+			function rotateWheel() {
+				spinTime += 30;
+				if (spinTime >= spinTimeTotal) {
+					stopRotateWheel();
+					return;
+				}
+				const spinAngle =
+					spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+				startAngle += (spinAngle * Math.PI) / 180;
+				drawWheel();
+				spinTimeout = setTimeout(rotateWheel, 30);
+			}
+
+			function stopRotateWheel() {
+				const degrees = (startAngle * 180) / Math.PI + 90;
+				const arcd = 360 / players.length;
+				const index = Math.floor((360 - (degrees % 360)) / arcd);
+				ctx.save();
+				ctx.font = "bold 24px Arial";
+				ctx.fillStyle = "black";
+				ctx.fillText("Wylosowano: " + players[index], 200, 200);
+				ctx.restore();
+			}
+
+			function easeOut(t, b, c, d) {
+				const ts = (t /= d) * t;
+				const tc = ts * t;
+				return b + c * (tc + -3 * ts + 3 * t);
+			}
+
+			function getRandomColor() {
+				const letters = "0123456789ABCDEF";
+				let color = "#";
+				for (let i = 0; i < 6; i++) {
+					color += letters[Math.floor(Math.random() * 16)];
+				}
+				return color;
+			}
+		</script>
+	</body>
+</html>
