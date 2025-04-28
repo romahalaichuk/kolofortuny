@@ -48,10 +48,10 @@
 				height: 0;
 				border-left: 20px solid transparent;
 				border-right: 20px solid transparent;
-				border-top: 30px solid red; /* STRZAŁKA W DÓŁ */
+				border-top: 30px solid red;
 				margin: 20px auto;
 			}
-			/* Zaciemnienie i wynik */
+
 			#overlay {
 				position: fixed;
 				top: 0;
@@ -82,7 +82,7 @@
 					opacity: 1;
 				}
 			}
-			/* Fajerwerki */
+
 			.firework {
 				position: absolute;
 				width: 5px;
@@ -207,7 +207,7 @@
 				document.getElementById("overlay").style.display = "none";
 				spinAngleStart = Math.random() * 10 + 10;
 				spinTime = 0;
-				spinTimeTotal = Math.random() * 5000 + 5000; // DUŻO DŁUŻSZE kręcenie (5–10 sek)
+				spinTimeTotal = Math.random() * 5000 + 5000;
 				rotateWheel();
 				document.getElementById("spinSound").play();
 			}
